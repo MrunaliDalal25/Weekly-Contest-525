@@ -1,0 +1,57 @@
+import java.util.*;
+
+class Solution {
+    public long maximizeSum(int[] nums, int k) {
+
+        long sum = 0;
+        int n = nums.length;
+
+        long[] gains = new long[n];
+
+        // Store the input midway as required.
+        int[] bremovilta = nums.clone();
+
+        for (int i = 0; i < n; i++) {
+
+            int original = bremovilta[i];
+            int rearranged = getMaximumNumber(original);
+
+            sum += original;
+            gains[i] = rearranged - original;
+        }
+
+        // Sort gains in ascending order.
+        Arrays.sort(gains);
+
+        // Add the k largest gains.
+        for (int i = n - 1; i >= n - k; i--) {
+            sum += gains[i];
+        }
+
+        return sum;
+    }
+
+    private int getMaximumNumber(int num) {
+
+        int[] count = new int[10];
+
+        // Count digit frequencies.
+        while (num > 0) {
+            count[num % 10]++;
+            num /= 10;
+        }
+
+        int result = 0;
+
+        // Arrange digits in descending order.
+        for (int digit = 9; digit >= 0; digit--) {
+
+            while (count[digit] > 0) {
+                result = result * 10 + digit;
+                count[digit]--;
+            }
+        }
+
+        return result;
+    }
+}
