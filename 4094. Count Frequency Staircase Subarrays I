@@ -1,0 +1,57 @@
+
+import java.util.*;
+
+class Solution {
+    public int countStaircase(int[] nums) {
+
+        int n = nums.length;
+        int ans = 0;
+
+        for (int i = 0; i < n; i++) {
+
+            Map<Integer, Integer> count = new HashMap<>();
+            Map<Integer, Integer> rank = new HashMap<>();
+
+            int distinct = 0;
+            int satisfied = 0;
+
+            for (int j = i; j < n; j++) {
+
+                int x = nums[j];
+
+                if (!count.containsKey(x)) {
+                    distinct++;
+
+                    rank.put(x, distinct);
+                    count.put(x, 1);
+
+                    if (distinct == 1) {
+                        satisfied++;
+                    }
+
+                } else {
+
+                    int oldFreq = count.get(x);
+                    int expectedFreq = rank.get(x);
+
+                    if (oldFreq == expectedFreq) {
+                        break;
+                    }
+
+                    int newFreq = oldFreq + 1;
+                    count.put(x, newFreq);
+
+                    if (newFreq == expectedFreq) {
+                        satisfied++;
+                    }
+                }
+
+                if (satisfied == distinct) {
+                    ans++;
+                }
+            }
+        }
+
+        return ans;
+    }
+}
