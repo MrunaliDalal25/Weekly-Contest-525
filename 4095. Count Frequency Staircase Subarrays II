@@ -1,0 +1,188 @@
+
+import java.util.*;
+
+class Solution {
+
+    private void update(int[] tree, int size, int value, int pos) {
+
+        int idx = size + value;
+        tree[idx] = pos;
+
+        idx >>= 1;
+
+        while (idx > 0) {
+            tree[idx] = Math.min(
+                tree[idx * 2],
+                tree[idx * 2 + 1]
+            );
+            idx >>= 1;
+        }
+    }
+
+    public int countStaircase(int[] nums) {
+
+        int n = nums.length;
+        int MAX = 100000;
+
+        // 1. Count frequencies
+        int[] freq = new int[MAX + 1];
+
+        for (int x : nums) {
+            freq[x]++;
+        }
+
+        // 2. Store occurrence positions
+        int[][] occ = new int[MAX + 1][];
+
+        for (int v = 1; v <= MAX; v++) {
+            if (freq[v] > 0) {
+                occ[v] = new int[freq[v]];
+            }
+        }
+
+        int[] rankAt = new int[n];
+        int[] ptr = new int[MAX + 1];
+
+        for (int i = 0; i < n; i++) {
+            int x = nums[i];
+
+            rankAt[i] = ptr[x];
+            occ[x][ptr[x]++] = i;
+        }
+
+        // 3. Find next occurrence of same element
+        int[] nextSame = new int[n];
+        int[] last = new int[MAX + 1];
+
+        Arrays.fill(last, n);
+
+        for (int i = n - 1; i >= 0; i--) {
+            int x = nums[i];
+
+            nextSame[i] = last[x];
+            last[x] = i;
+        }
+
+        // 4. Build Segment Tree
+        int size = 1;
+
+        while (size <= MAX) {
+            size <<= 1;
+        }
+
+        int[] tree = new int[size * 2];
+        Arrays.fill(tree, n);
+
+        int[] firstPos = new int[MAX + 1];
+        Arrays.fill(firstPos, n);
+
+        for (int i = 0; i < n; i++) {
+            if (firstPos[nums[i]] == n) {
+                firstPos[nums[i]] = i;
+            }
+        }
+
+        for (int v = 1; v <= MAX; v++) {
+            tree[size + v] = firstPos[v];
+        }
+
+        for (int i = size - 1; i > 0; i--) {
+            tree[i] = Math.min(
+                tree[i * 2],
+                tree[i * 2 + 1]
+            );
+        }
+
+        // 5. Count valid subarrays
+        int ans = 0;
+
+        int[] selected = new int[n];
+        int[] positions = new int[n];
+
+        for (int l = 0; l < n; l++) {
+
+            int lower = l;
+            int upper = n - 1;
+
+            int k = 0;
+            int selectedCount = 0;
+
+            while (true) {
+
+                // Find next distinct element
+                int p = tree[1];
+
+                if (p == n) {
+                    break;
+                }
+
+                int x = nums[p];
+
+                // Temporarily remove this value
+                update(tree, size, x, n);
+
+                selected[selectedCount] = x;
+                positions[selectedCount] = p;
+                selectedCount++;
+
+                k++;
+
+                int idx = rankAt[p];
+
+                // Position of kth occurrence
+                int target = idx + k - 1;
+
+                if (target >= occ[x].length) {
+                    break;
+                }
+
+                int a = occ[x][target];
+
+                // Position of (k+1)th occurrence
+                int nextIdx = idx + k;
+
+                int b = nextIdx < occ[x].length
+                        ? occ[x][nextIdx]
+                        : n;
+
+                lower = Math.max(lower, a);
+                upper = Math.min(upper, b - 1);
+
+                if (lower > upper) {
+                    break;
+                }
+
+                // Next distinct element
+                int nextDistinct = tree[1];
+
+                int right = Math.min(
+                    upper,
+                    nextDistinct - 1
+                );
+
+                if (lower <= right) {
+                    ans += right - lower + 1;
+                }
+            }
+
+            for (int t = 0; t < selectedCount; t++) {
+                update(
+                    tree,
+                    size,
+                    selected[t],
+                    positions[t]
+                );
+            }
+
+            // Move starting position forward
+            update(
+                tree,
+                size,
+                nums[l],
+                nextSame[l]
+            );
+        }
+
+        return ans;
+    }
+}
